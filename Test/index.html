@@ -8,13 +8,13 @@
       document.addEventListener('DOMContentLoaded', function () {
         var video = document.getElementById('video');
         var hls = new Hls();
-        hls.loadSource('https://video-dev.github.io/streams/x36xhzz/x36xhzz.m3u8');
+        hls.loadSource('http://127.0.0.1:8888/v1/manifest/master/testManifest.m3u8');
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
           video.play();
         });
 
-        video.src = 'https://video-dev.github.io/streams/x36xhzz/x36xhzz.m3u8';
+  
         video.addEventListener('loadedmetadata', function () {
           video.play();
         });

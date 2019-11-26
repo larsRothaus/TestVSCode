@@ -1,3 +1,4 @@
 {
-    "extensions.showRecommendationsOnlyOnDemand": true
+    "extensions.showRecommendationsOnlyOnDemand": true,
+    "editor.tabSize": 2
 }
