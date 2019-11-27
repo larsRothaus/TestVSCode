@@ -8,23 +8,23 @@
       document.addEventListener('DOMContentLoaded', function () {
         var video = document.getElementById('video');
         var hls = new Hls();
-        hls.loadSource('http://127.0.0.1:8888/v1/manifest/master/testManifest.m3u8');
+        hls.loadSource('http://127.0.0.1:8888/v1/streams/original-manifest/manifests/manifest.m3u8');
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          video.play();
-        });
+          injectAds();
 
-  
-        video.addEventListener('loadedmetadata', function () {
           video.play();
         });
       });
 
-
+      window.injectAds = () => fetch('http://127.0.0.1:8888/v1/streams/original-manifest/ads/inject');
+      window.getSegments = () => fetch('http://127.0.0.1:8888/v1/streams/original-manifest/segments').then(r => r.json()).then(s => console.log(s));
     </script>
 </head>
 <body>
 <video id="video" width="400" controls></video>
-
+<br />
+<button id="btnInjectAds" onclick="injectAds()">Inject Ads</button>
+<button id="btnGetSegments" onclick="getSegments()">Get Segments</button>
 </body>
 </html>
