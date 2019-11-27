@@ -7,6 +7,11 @@ const port = 8888;
 application.use(express.json());
 application.use(cors());
 
+let redirect = (destination, response) => {
+  response.status(302).set({
+    Location: destination
+  }).send();
+};
 
 let isMockAds = false;
 let manifest1 = fs.readFileSync(`./Test/testManifest.m3u8`);
@@ -20,10 +25,11 @@ application.get('/v1/manifest/master/:stream.m3u8', (request, response) => {
   });
   response.status(200).send(m);
 });
-application.get('/v1/manifest/variant/:stream.m3u8', (request, response) => {
-  console.log('Variant stream:', request.params.stream);
-  response.status(200).send('');
+application.get('/v1/segment/:segment.ts', (request, response) => {
+  let baseUrl = 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/';
+  redirect(`${baseUrl}${request.params.segment}.ts`, response);
 });
+
 application.get('/go', (request, response) => {
   isMockAds = !isMockAds
 

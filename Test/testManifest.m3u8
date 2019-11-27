@@ -5,7 +5,14 @@
 #EXT-X-ALLOW-CACHE:NO
 #EXT-X-START:TIME-OFFSET=0
 #EXT-X-TARGETDURATION:11
+#EXTINF:10.0,
 https://s2.content.video.llnw.net/smedia/42f4e71183054396907c0dea18241568/Ks/l56Xl_JnkEU-hQoz9-AHS5lrBjICWHZV0dybQSN3w/francstireurs_entrevue_ep472_seq24.mpegts/playlist3.ts
+#EXTINF:10.0,
+#EXT-X-DISCONTINUITY
+http://localhost:8888/v1/segment/media_b3628000_0.ts
+#EXTINF:10.0,
+http://localhost:8888/v1/segment/media_b3628000_1.ts
+#EXT-X-DISCONTINUITY
 #EXTINF:10.032322,
 https://s2.content.video.llnw.net/smedia/42f4e71183054396907c0dea18241568/Ks/l56Xl_JnkEU-hQoz9-AHS5lrBjICWHZV0dybQSN3w/francstireurs_entrevue_ep472_seq24.mpegts/playlist4.ts
 #EXTINF:10.030111,
