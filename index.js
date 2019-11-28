@@ -58,6 +58,7 @@ application.get('/v1/streams/:stream/manifests/manifest.m3u8', (request, respons
   response.status(200).send(manifest);
 });
 
+let pendingDiscontinuityIncrement = false;
 application.get('/v1/streams/:stream/segments/segment-:segment.ts', (request, response) => {
   const manifestName = request.params.stream;
   const segmentNumber = request.params.segment;
@@ -65,16 +66,22 @@ application.get('/v1/streams/:stream/segments/segment-:segment.ts', (request, re
   const segment = manifestWriter.segments[segmentNumber];
 
   ++manifestWriter.mediaSequence;
-  if (segment.discontinuity) {
+  if (pendingDiscontinuityIncrement) {
+    pendingDiscontinuityIncrement = false;
     ++manifestWriter.discontinuitySequence;
+  }
+  if (segment.discontinuity) {
+    pendingDiscontinuityIncrement = true;
   }
 
   let isAllowedToGetSegment = true; // ToDo: Build logic to see if user is allowed to get this segment
   if (isAllowedToGetSegment) {
     if (segment.proxy) {
       // ToDo: Serve ad segment directly
+      segment.consumed = true;
     }
     else if (segment.redirectDestination) {
+      segment.consumed = true;
       return redirect(segment.redirectDestination, response);
     }
     else {
@@ -92,7 +99,52 @@ application.get('/v1/streams/:stream/segments', (request, response) => {
   response.status(200).send(manifestWriter.segments);
 });
 
+application.get('/v1/streams/:stream/jump', (request, response) => {
+  const manifestName = request.params.stream;
+  const manifestWriter = manifestWriters[manifestName];
+  //manifestWriter.mediaSequence += 5;
+  manifestWriter.mediaSequence = 101;
+  //manifestWriter.startOffset = manifestWriter.mediaSequence * manifestWriter.targetDuration;
+  //manifestWriter.startOffset = 22;
+  const adSegments = [
+    {
+      duration: 10,
+      uri: 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/media_b3628000_1.ts'
+    },
+    {
+      duration: 10,
+      uri: 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/media_b3628000_2.ts'
+    }
+  ];
+
+  manifestWriter.injectSegments(adSegments, 104);
+  response.status(202).send();
+});
+
 application.get('/v1/streams/:stream/ads/inject', (request, response) => {
+  const manifestName = request.params.stream;
+  const manifestWriter = manifestWriters[manifestName];
+  manifestWriter.mediaSequence += 10;
+  manifestWriter.startOffset = manifestWriter.mediaSequence * 10;
+  const adSegments = [
+    {
+      duration: 10,
+      uri: 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/media_b3628000_1.ts'
+    },
+    {
+      duration: 10,
+      uri: 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/media_b3628000_2.ts'
+    },
+    {
+      duration: 10,
+      uri: 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/media_b3628000_3.ts'
+    }
+  ];
+  manifestWriter.injectSegments(adSegments);
+  response.status(202).send();
+});
+
+application.get('/v1/streams/:stream/ads/append', (request, response) => {
   const manifestName = request.params.stream;
   const manifestWriter = manifestWriters[manifestName];
   const adSegments = [

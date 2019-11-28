@@ -4,6 +4,7 @@ module.exports = class M3u8Writer {
     this.mediaSequence = 0;
     this.targetDuration = 10;
     this.slidingWindowSegmentCount = 10;
+    this.startOffset = 0;
   }
 
   setHeaderInformation({discontinuitySequence, mediaSequence, targetDuration}) {
@@ -18,8 +19,9 @@ module.exports = class M3u8Writer {
     this.targetDuration = Math.ceil(segments[0].duration);
   }
 
-  injectSegments(segments = []) {
-    const injectAt = this.mediaSequence + this.slidingWindowSegmentCount;
+  injectSegments(segments = [], injectAtPosition) {
+    //const injectAt = this.mediaSequence + this.slidingWindowSegmentCount;
+    const injectAt = injectAtPosition || this.mediaSequence;
 
     const segmentsBeforeDiscontinuity = this.segments.slice(0, injectAt);
     let segmentsAfterDiscontinuity = this.segments.slice(injectAt);
@@ -58,11 +60,12 @@ module.exports = class M3u8Writer {
   writeHeader() {
     return `
 #EXTM3U
-#EXT-X-VERSION:6
+#EXT-X-VERSION:4
 #EXT-X-DISCONTINUITY-SEQUENCE:${this.discontinuitySequence}
 #EXT-X-MEDIA-SEQUENCE:${this.mediaSequence}
+#EXT-X-PLAYLIST-TYPE:EVENT
 #EXT-X-ALLOW-CACHE:NO
-#EXT-X-START:TIME-OFFSET=0
+#EXT-X-START:TIME-OFFSET=${this.startOffset}
 #EXT-X-TARGETDURATION:${this.targetDuration}
 `.trim();
   }
@@ -72,7 +75,12 @@ module.exports = class M3u8Writer {
 
     let previousTimeline = this.discontinuitySequence;
     let bodyLines = [''];
-    this.segments
+    let segments = this.segments;
+    //  .slice(this.mediaSequence);
+    //if (this.mediaSequence > 0) {
+    //  segments = segments.slice(-4);
+    //}
+    segments
       .slice(this.mediaSequence, this.mediaSequence + this.slidingWindowSegmentCount)
       .forEach((segment) => {
         if (segment.timeline > previousTimeline) {
@@ -80,8 +88,10 @@ module.exports = class M3u8Writer {
           bodyLines.push('#EXT-X-DISCONTINUITY');
         }
 
+        //bodyLines.push('#EXT-X-DISCONTINUITY');
         bodyLines.push(`#EXTINF:${segment.formattedDuration}`);
         bodyLines.push(segment.redirectUrl);
+        //bodyLines.push(segment.redirectDestination);
       });
 
     return header + bodyLines.join('\n');
