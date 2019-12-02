@@ -1,5 +1,7 @@
 module.exports = class M3u8Writer {
-  constructor() {
+  constructor(manifestName) {
+    this.manifestName = manifestName;
+
     this.discontinuitySequence = 0;
     this.mediaSequence = 0;
     this.targetDuration = 10;
@@ -21,6 +23,19 @@ module.exports = class M3u8Writer {
     this.targetDuration = Math.ceil(segments[0].duration);
     this.totalDuration = segments.reduce((a, b) => a + (b.duration || 0), 0);
     this.tail4Duration = segments.slice(-4).reduce((a, b) => a + (b.duration || 0), 0);
+  }
+
+  appendSegments(segments = []) {
+    let startNumber = this.segments.length;
+    segments.forEach((segment, s) => {
+      segment.redirectUrl = `http://localhost:8888/v1/streams/${this.manifestName}/segments/segment-${startNumber + s}.ts`;
+    });
+    this.setSegments(this.segments.concat(segments));
+  }
+
+  extendTimeline(from = 0) {
+    let segments = this.segments.slice(from);
+    this.appendSegments(segments);
   }
 
   injectSegments(segments = [], injectAtPosition) {

@@ -25,7 +25,7 @@ application.get('/v1/streams/:stream/manifests/manifest.m3u8', (request, respons
   }
 
   if (!(manifestName in manifestWriters)) {
-    manifestWriters[manifestName] = new M3u8Writer();
+    manifestWriters[manifestName] = new M3u8Writer(manifestName);
   }
   let manifestWriter = manifestWriters[manifestName];
 
@@ -59,11 +59,13 @@ application.get('/v1/streams/:stream/manifests/manifest.m3u8', (request, respons
 });
 
 let pendingDiscontinuityIncrement = false;
+let seekAdjustment = 0;
+let pendingJump = false;
 application.get('/v1/streams/:stream/segments/segment-:segment.ts', (request, response) => {
   const manifestName = request.params.stream;
   const segmentNumber = request.params.segment;
   const manifestWriter = manifestWriters[manifestName];
-  const segment = manifestWriter.segments[segmentNumber];
+  const segment = manifestWriter.segments[segmentNumber - seekAdjustment];
 
   ++manifestWriter.mediaSequence;
   if (pendingDiscontinuityIncrement) {
@@ -73,6 +75,22 @@ application.get('/v1/streams/:stream/segments/segment-:segment.ts', (request, re
   if (segment.discontinuity) {
     pendingDiscontinuityIncrement = true;
   }
+
+  //if (segmentNumber - manifestWriter.mediaSequence > 1) {
+  //  if (!pendingJump) {
+  //    // Seek ahead detected
+  //    pendingJump = true;
+  //    seekAdjustment = segmentNumber - manifestWriter.mediaSequence + 1;
+  //    const nextAllowedSegment = manifestWriter.segments[manifestWriter.mediaSequence - 1];
+  //    const nextMediaSequence = manifestWriter.segments.length;
+  //    manifestWriter.extendTimeline(manifestWriter.mediaSequence - 1);
+  //    manifestWriter.mediaSequence = nextMediaSequence;
+  //    nextAllowedSegment.consumed = true;
+  //    return redirect(nextAllowedSegment.redirectDestination, response);
+  //  }
+//
+  //  pendingJump = false;
+  //}
 
   let isAllowedToGetSegment = true; // ToDo: Build logic to see if user is allowed to get this segment
   if (isAllowedToGetSegment) {
@@ -140,12 +158,13 @@ application.get('/v1/streams/:stream/jumpAndReAddTimeline', (request, response) 
   manifestWriter.mediaSequence = manifestWriter.segments.length;
   //manifestWriter.startOffset = 22 + manifestWriter.totalDuration - manifestWriter.tail4Duration;
 
-  let newSegments = manifestWriter.segments.slice();
-  let startNumber = newSegments.length;
-  newSegments.forEach((segment, s) => {
-    segment.redirectUrl = `http://localhost:8888/v1/streams/${manifestName}/segments/segment-${startNumber + s}.ts`;
-  });
-  manifestWriter.setSegments(manifestWriter.segments.concat(newSegments));
+  //let newSegments = manifestWriter.segments.slice();
+  //let startNumber = newSegments.length;
+  //newSegments.forEach((segment, s) => {
+  //  segment.redirectUrl = `http://localhost:8888/v1/streams/${manifestName}/segments/segment-${startNumber + s}.ts`;
+  //});
+  //manifestWriter.setSegments(manifestWriter.segments.concat(newSegments));
+  manifestWriter.extendTimeline(0);
   response.status(202).send();
 });
 
