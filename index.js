@@ -121,6 +121,34 @@ application.get('/v1/streams/:stream/jump', (request, response) => {
   response.status(202).send();
 });
 
+application.get('/v1/streams/:stream/jumpAndReAddTimeline', (request, response) => {
+  const manifestName = request.params.stream;
+  const manifestWriter = manifestWriters[manifestName];
+  const adSegments = [
+    {
+      duration: 10,
+      uri: 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/media_b3628000_1.ts'
+    },
+    {
+      duration: 10,
+      uri: 'https://f6910d75359c98ddab8aaca43071d185-httpcache0-90292-cacheod0.dna.qbrick.com/90292-cacheod0/_definst_/smil:assets/5c/5cd806f4-00090292/OfficeVideoInteract/media_b3628000_2.ts'
+    }
+  ];
+
+  manifestWriter.injectSegments(adSegments, manifestWriter.mediaSequence);
+
+  manifestWriter.mediaSequence = manifestWriter.segments.length;
+  //manifestWriter.startOffset = 22 + manifestWriter.totalDuration - manifestWriter.tail4Duration;
+
+  let newSegments = manifestWriter.segments.slice();
+  let startNumber = newSegments.length;
+  newSegments.forEach((segment, s) => {
+    segment.redirectUrl = `http://localhost:8888/v1/streams/${manifestName}/segments/segment-${startNumber + s}.ts`;
+  });
+  manifestWriter.setSegments(manifestWriter.segments.concat(newSegments));
+  response.status(202).send();
+});
+
 application.get('/v1/streams/:stream/ads/inject', (request, response) => {
   const manifestName = request.params.stream;
   const manifestWriter = manifestWriters[manifestName];

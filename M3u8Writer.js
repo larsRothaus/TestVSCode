@@ -3,6 +3,8 @@ module.exports = class M3u8Writer {
     this.discontinuitySequence = 0;
     this.mediaSequence = 0;
     this.targetDuration = 10;
+    this.totalDuration = 10;
+    this.tail4Duration = 10;
     this.slidingWindowSegmentCount = 10;
     this.startOffset = 0;
   }
@@ -17,6 +19,8 @@ module.exports = class M3u8Writer {
     this.segments = segments;
 
     this.targetDuration = Math.ceil(segments[0].duration);
+    this.totalDuration = segments.reduce((a, b) => a + (b.duration || 0), 0);
+    this.tail4Duration = segments.slice(-4).reduce((a, b) => a + (b.duration || 0), 0);
   }
 
   injectSegments(segments = [], injectAtPosition) {
@@ -54,7 +58,7 @@ module.exports = class M3u8Writer {
       segment.timeline = timeline;
     });
 
-    this.segments = segmentsBeforeDiscontinuity.concat(segments, segmentsAfterDiscontinuity);
+    this.setSegments(segmentsBeforeDiscontinuity.concat(segments, segmentsAfterDiscontinuity));
   }
 
   writeHeader() {
@@ -81,14 +85,15 @@ module.exports = class M3u8Writer {
     //  segments = segments.slice(-4);
     //}
     segments
-      .slice(this.mediaSequence, this.mediaSequence + this.slidingWindowSegmentCount)
+      //.slice(this.mediaSequence, this.mediaSequence + this.slidingWindowSegmentCount)
+      .slice(this.mediaSequence)
       .forEach((segment) => {
-        if (segment.timeline > previousTimeline) {
-          previousTimeline = segment.timeline;
-          bodyLines.push('#EXT-X-DISCONTINUITY');
-        }
+        //if (segment.timeline > previousTimeline) {
+        //  previousTimeline = segment.timeline;
+        //  bodyLines.push('#EXT-X-DISCONTINUITY');
+        //}
 
-        //bodyLines.push('#EXT-X-DISCONTINUITY');
+        bodyLines.push('#EXT-X-DISCONTINUITY');
         bodyLines.push(`#EXTINF:${segment.formattedDuration}`);
         bodyLines.push(segment.redirectUrl);
         //bodyLines.push(segment.redirectDestination);
