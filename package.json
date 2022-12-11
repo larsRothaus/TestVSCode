@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "hls.js": "^0.12.4",
     "m3u8-parser": "^4.4.0"
   }
